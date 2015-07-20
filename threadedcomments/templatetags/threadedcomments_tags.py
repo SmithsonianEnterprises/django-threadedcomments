@@ -1,5 +1,7 @@
 from django import template
+from django.db.models import Q
 from django.template.loader import render_to_string
+
 from threadedcomments.compat import BASE_APP, django_comments as comments
 from threadedcomments.util import annotate_tree_properties, fill_tree as real_fill_tree
 
@@ -10,8 +12,8 @@ elif BASE_APP == 'django_comments':
 else:
     raise NotImplementedError()
 
-
 register = template.Library()
+
 
 class BaseThreadedCommentNode(BaseCommentNode):
     def __init__(self, parent=None, flat=False, root_only=False, **kwargs):
@@ -66,6 +68,9 @@ class BaseThreadedCommentNode(BaseCommentNode):
     # For older Django (1.5) versions:
     def get_query_set(self, context):
         qs = super(BaseThreadedCommentNode, self).get_query_set(context)
+        qs = qs.filter(
+            Q(user__student__classroom__public_comments=True) | Q(user__student__classroom__isnull=True)).order_by(
+            '-submit_date')
         if self.flat:
             qs = qs.order_by('-submit_date')
         elif self.root_only:
@@ -73,11 +78,11 @@ class BaseThreadedCommentNode(BaseCommentNode):
         return qs
 
 
-
 class CommentListNode(BaseThreadedCommentNode):
     """
     Insert a list of comments into the context.
     """
+
     def get_context_value_from_queryset(self, context, qs):
         return list(qs)
 
@@ -86,6 +91,7 @@ class CommentCountNode(CommentListNode):
     """
     Insert a count of comments into the context.
     """
+
     def get_context_value_from_queryset(self, context, qs):
         return qs.count()
 
@@ -94,6 +100,7 @@ class CommentFormNode(BaseThreadedCommentNode):
     """
     Insert a form for the comment model into the context.
     """
+
     @classmethod
     def handle_token(cls, parser, token):
         tokens = token.contents.split()
@@ -106,7 +113,8 @@ class CommentFormNode(BaseThreadedCommentNode):
         elif len(tokens) == 7:
             # {% get_comment_form for [object] as [varname] with [parent_id] %}
             if tokens[-2] != u'with':
-                raise template.TemplateSyntaxError("%r tag must have a 'with' as the last but one argument." % (tokens[0],))
+                raise template.TemplateSyntaxError(
+                    "%r tag must have a 'with' as the last but one argument." % (tokens[0],))
             return cls(
                 object_expr=parser.compile_filter(tokens[2]),
                 as_varname=tokens[4],
@@ -115,7 +123,8 @@ class CommentFormNode(BaseThreadedCommentNode):
         elif len(tokens) == 8:
             # {% get_comment_form for [app].[model] [object_id] as [varname] with [parent_id] %}
             if tokens[-2] != u'with':
-                raise template.TemplateSyntaxError("%r tag must have a 'with' as the last but one argument." % (tokens[0],))
+                raise template.TemplateSyntaxError(
+                    "%r tag must have a 'with' as the last but one argument." % (tokens[0],))
             return cls(
                 ctype=BaseThreadedCommentNode.lookup_content_type(tokens[2], tokens[0]),
                 object_pk_expr=parser.compile_filter(tokens[3]),
@@ -171,7 +180,8 @@ class RenderCommentFormNode(CommentFormNode):
         elif len(tokens) == 5:
             # {% render_comment_form for obj with parent_id %}
             if tokens[-2] != u'with':
-                raise template.TemplateSyntaxError("%r tag must have 'with' as the last but one argument" % (tokens[0],))
+                raise template.TemplateSyntaxError(
+                    "%r tag must have 'with' as the last but one argument" % (tokens[0],))
             return cls(
                 object_expr=parser.compile_filter(tokens[2]),
                 parent=parser.compile_filter(tokens[4])
@@ -179,7 +189,8 @@ class RenderCommentFormNode(CommentFormNode):
         elif len(tokens) == 6:
             # {% render_comment_form for app.model object_pk with parent_id %}
             if tokens[-2] != u'with':
-                raise template.TemplateSyntaxError("%r tag must have 'with' as the last but one argument" % (tokens[0],))
+                raise template.TemplateSyntaxError(
+                    "%r tag must have 'with' as the last but one argument" % (tokens[0],))
             return cls(
                 ctype=BaseThreadedCommentNode.lookup_content_type(tokens[2], tokens[0]),
                 object_pk_expr=parser.compile_filter(tokens[3]),
@@ -199,7 +210,7 @@ class RenderCommentFormNode(CommentFormNode):
             context.push()
             form_str = render_to_string(
                 template_search_list,
-                {"form" : self.get_form(context)},
+                {"form": self.get_form(context)},
                 context
             )
             context.pop()
@@ -233,8 +244,8 @@ class RenderCommentListNode(CommentListNode):
         elif len(tokens) == 4:
             # {% render_comment_list for app.models pk %}
             return cls(
-                ctype = BaseCommentNode.lookup_content_type(tokens[2], tokens[0]),
-                object_pk_expr = parser.compile_filter(tokens[3]),
+                ctype=BaseCommentNode.lookup_content_type(tokens[2], tokens[0]),
+                object_pk_expr=parser.compile_filter(tokens[3]),
                 **extra_kw
             )
         else:
@@ -251,7 +262,7 @@ class RenderCommentListNode(CommentListNode):
             qs = self.get_query_set(context)
             context.push()
             liststr = render_to_string(template_search_list, {
-                "comment_list" : self.get_context_value_from_queryset(context, qs)
+                "comment_list": self.get_context_value_from_queryset(context, qs)
             }, context)
             context.pop()
             return liststr
