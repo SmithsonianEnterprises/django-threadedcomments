@@ -25,6 +25,15 @@ class ThreadedCommentForm(CommentForm):
                 self.base_fields.keyOrder.index('comment'), 'title',
                 self.base_fields.pop('title')
             )
+
+        # Remove fields
+        self.base_fields['email'].required = False
+        self.base_fields['email'].widget = forms.HiddenInput()
+        self.base_fields['title'].widget = forms.HiddenInput()
+        self.base_fields['name'].widget = forms.HiddenInput()
+        self.base_fields['url'].widget = forms.HiddenInput()
+
+
         self.parent = parent
         if initial is None:
             initial = {}
