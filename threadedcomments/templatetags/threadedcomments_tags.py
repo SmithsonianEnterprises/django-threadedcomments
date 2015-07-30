@@ -68,9 +68,7 @@ class BaseThreadedCommentNode(BaseCommentNode):
     # For older Django (1.5) versions:
     def get_query_set(self, context):
         qs = super(BaseThreadedCommentNode, self).get_query_set(context)
-        qs = qs.filter(
-            Q(user__student__classroom__public_comments=True) | Q(user__student__classroom__isnull=True)).order_by(
-            '-submit_date')
+        qs = qs.filter(Q(classroom__public_comments=True)).order_by('-submit_date')
         if self.flat:
             qs = qs.order_by('-submit_date')
         elif self.root_only:

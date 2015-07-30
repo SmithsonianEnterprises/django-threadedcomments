@@ -26,7 +26,7 @@ if is_installed('django.contrib.comments'):
     from django.contrib import comments as django_comments
     from django.contrib.comments import get_model, get_form, signals
     from django.contrib.comments.forms import CommentForm
-    from django.contrib.comments.models import Comment
+    from django.contrib.comments.models import Comment, BaseCommentAbstractModel, COMMENT_MAX_LENGTH
     from django.contrib.comments.managers import CommentManager
     from django.contrib.comments.views.comments import CommentPostBadRequest
 elif is_installed('django_comments'):
@@ -35,7 +35,7 @@ elif is_installed('django_comments'):
     import django_comments
     from django_comments import get_model, get_form, signals
     from django_comments.forms import CommentForm
-    from django_comments.models import Comment
+    from django_comments.models import Comment, BaseCommentAbstractModel, COMMENT_MAX_LENGTH
     from django_comments.managers import CommentManager
     from django_comments.views.comments import CommentPostBadRequest
 else:
@@ -50,6 +50,8 @@ __all__ = (
     'get_model',
     'get_form',
     'CommentForm',
+    'BaseCommentAbstractModel',
+    'COMMENT_MAX_LENGTH',
     'Comment',
     'CommentManager',
     'moderator',

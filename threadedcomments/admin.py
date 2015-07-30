@@ -15,28 +15,56 @@ elif BASE_APP == 'django_comments':
 else:
     raise NotImplementedError()
 
+class IsPublicCommentFilter(admin.SimpleListFilter):
+    title = "Is Public"
+    parameter_name = "is_public"
+
+    def lookups(self, request, model_admin):
+        return [(1, "Yes"), (0, "No")]
+
+    def queryset(self, request, queryset):
+        """
+        If filter exists, filter queryset and return else
+        just return the queryset filtered by current site.
+        """
+        if not self.value() is None:
+            value = bool(int(self.value()))
+            queryset = queryset \
+                .filter(is_public=value) \
+                .filter(classroom__public_comments=value) \
+                .distinct()
+
+        return queryset
 
 class ThreadedCommentsAdmin(CommentsAdmin):
     fieldsets = (
         (None,
-           {'fields': ('content_type', 'object_pk', 'site')}
-        ),
+         {'fields': ('content_type', 'object_pk', 'site')}
+         ),
         (_('Content'),
-           {'fields': ('user', 'user_name', 'user_email', 'user_url', 'title', 'comment')}
-        ),
+         {'fields': ('user', 'classroom', 'comment')}
+         ),
         (_('Hierarchy'),
-           {'fields': ('parent',)}
-        ),
+         {'fields': ('parent',)}
+         ),
         (_('Metadata'),
-           {'fields': ('submit_date', 'ip_address', 'is_public', 'is_removed')}
-        ),
+         {'fields': ('submit_date', 'ip_address', 'public', 'is_removed')}
+         ),
     )
+    list_filter = ('submit_date', 'site', IsPublicCommentFilter, 'is_removed')
 
-    list_display = ('name', 'title', 'content_type', 'object_pk', 'parent',
-                    'ip_address', 'submit_date', 'is_public', 'is_removed')
-    search_fields = ('title', 'comment', 'user__username', 'user_name',
-                     'user_email', 'user_url', 'ip_address')
-    raw_id_fields = ("parent",)
+    list_display = ( 'content_type', 'object_pk', 'parent',
+                    'ip_address', 'submit_date', 'public', 'is_removed')
+    search_fields = ('comment', 'user__username', 'ip_address', 'object_pk')
+    raw_id_fields = ("parent", 'user', 'classroom')
+    readonly_fields = ['public']
+
+    def public(self, obj):
+        public_comments = False
+        if obj.user.student and obj.user.student.classroom:
+            public_comments = obj.user.student.classroom.public_comments
+        return obj.is_public and public_comments
+
+    public.boolean = True
 
 admin.site.register(ThreadedComment, ThreadedCommentsAdmin)
-

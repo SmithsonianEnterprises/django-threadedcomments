@@ -40,11 +40,30 @@ class ThreadedCommentForm(CommentForm):
         initial.update({'parent': self.parent})
         super(ThreadedCommentForm, self).__init__(target_object, data=data, initial=initial)
 
+    def check_for_duplicate_comment(self, new):
+        """
+        Check that a submitted comment isn't a duplicate. This might be caused
+        by someone posting a comment twice. If it is a dup, silently return the *previous* comment.
+        """
+        possible_duplicates = self.get_comment_model()._default_manager.using(
+            self.target_object._state.db
+        ).filter(
+            content_type=new.content_type,
+            object_pk=new.object_pk,
+        )
+        for old in possible_duplicates:
+            if old.submit_date.date() == new.submit_date.date() and old.comment == new.comment:
+                return old
+
+        return new
+
     def get_comment_model(self):
         return ThreadedComment
 
     def get_comment_create_data(self):
         d = super(ThreadedCommentForm, self).get_comment_create_data()
         d['parent_id'] = self.cleaned_data['parent']
-        d['title'] = self.cleaned_data['title']
+        d.pop('user_name')
+        d.pop('user_email')
+        d.pop('user_url')
         return d
