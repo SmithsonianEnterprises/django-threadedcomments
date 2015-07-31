@@ -66,4 +66,5 @@ class ThreadedCommentForm(CommentForm):
         d.pop('user_name')
         d.pop('user_email')
         d.pop('user_url')
+        d['is_public'] = False
         return d

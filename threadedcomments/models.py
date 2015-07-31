@@ -25,7 +25,7 @@ class ThreadedComment(BaseCommentAbstractModel):
     # Metadata about the comment
     submit_date = models.DateTimeField(_('date/time submitted'), default=None)
     ip_address = models.GenericIPAddressField(_('IP address'), unpack_ipv4=True, blank=True, null=True)
-    is_public = models.BooleanField(_('is public'), default=True,
+    is_public = models.BooleanField(_('is public'), default=False,
                                     help_text=_('Uncheck this box to make the comment effectively '
                                                 'disappear from the site.'))
     is_removed = models.BooleanField(_('is removed'), default=False,

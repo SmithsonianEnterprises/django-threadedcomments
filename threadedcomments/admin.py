@@ -1,7 +1,9 @@
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
+
 from .compat import BASE_APP
 from .models import ThreadedComment
+
 
 # This code is not in the .compat module to avoid admin imports in all other code.
 # The admin import usually starts a model registration too, hence keep these imports here.
@@ -14,6 +16,7 @@ elif BASE_APP == 'django_comments':
     from django_comments.admin import CommentsAdmin
 else:
     raise NotImplementedError()
+
 
 class IsPublicCommentFilter(admin.SimpleListFilter):
     title = "Is Public"
@@ -36,6 +39,7 @@ class IsPublicCommentFilter(admin.SimpleListFilter):
 
         return queryset
 
+
 class ThreadedCommentsAdmin(CommentsAdmin):
     fieldsets = (
         (None,
@@ -48,23 +52,23 @@ class ThreadedCommentsAdmin(CommentsAdmin):
          {'fields': ('parent',)}
          ),
         (_('Metadata'),
-         {'fields': ('submit_date', 'ip_address', 'public', 'is_removed')}
+         {'fields': ('submit_date', 'ip_address', 'is_public', 'classroom_public', 'is_removed')}
          ),
     )
     list_filter = ('submit_date', 'site', IsPublicCommentFilter, 'is_removed')
 
-    list_display = ( 'content_type', 'object_pk', 'parent',
-                    'ip_address', 'submit_date', 'public', 'is_removed')
+    list_display = ('content_type', 'object_pk', 'parent',
+                    'ip_address', 'submit_date', 'classroom_public', 'is_public', 'is_removed')
     search_fields = ('comment', 'user__username', 'ip_address', 'object_pk')
     raw_id_fields = ("parent", 'user', 'classroom')
-    readonly_fields = ['public']
+    readonly_fields = ['classroom_public']
 
-    def public(self, obj):
-        public_comments = False
-        if obj.user.student and obj.user.student.classroom:
-            public_comments = obj.user.student.classroom.public_comments
-        return obj.is_public and public_comments
+    def classroom_public(self, obj):
+        if obj.classroom:
+            return obj.classroom.public_comments
+        return False
 
-    public.boolean = True
+    classroom_public.boolean = True
+
 
 admin.site.register(ThreadedComment, ThreadedCommentsAdmin)
