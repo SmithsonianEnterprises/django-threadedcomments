@@ -1,3 +1,7 @@
+from django.contrib.contenttypes.generic import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.sites.models import Site
+from django.core import urlresolvers
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
@@ -9,7 +13,17 @@ PATH_SEPARATOR = getattr(settings, 'COMMENT_PATH_SEPARATOR', '/')
 PATH_DIGITS = getattr(settings, 'COMMENT_PATH_DIGITS', 10)
 
 
-class ThreadedComment(BaseCommentAbstractModel):
+class ThreadedComment(models.Model):
+    # Content-object field
+    content_type = models.ForeignKey(ContentType,
+                                     verbose_name=_('content type'),
+                                     related_name="content_type_set_for_%(class)s")
+    object_pk = models.IntegerField(_('object ID'), db_index=True)
+    content_object = GenericForeignKey(ct_field="content_type", fk_field="object_pk")
+
+    # Metadata about the comment
+    site = models.ForeignKey(Site)
+
     parent = models.ForeignKey('self', null=True, blank=True, default=None, related_name='children',
                                verbose_name=_('Parent'))
     last_child = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL,
@@ -34,6 +48,16 @@ class ThreadedComment(BaseCommentAbstractModel):
                                                  'be displayed instead.'))
 
     objects = CommentManager()
+
+    def get_content_object_url(self):
+        """
+        Get a URL suitable for redirecting to the content object.
+        """
+        return urlresolvers.reverse(
+            "comments-url-redirect",
+            args=(self.content_type_id, self.object_pk)
+        )
+
 
     @property
     def depth(self):
