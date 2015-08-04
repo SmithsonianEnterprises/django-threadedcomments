@@ -2,6 +2,7 @@ from django.contrib.contenttypes.generic import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.core import urlresolvers
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
@@ -57,6 +58,15 @@ class ThreadedComment(models.Model):
             "comments-url-redirect",
             args=(self.content_type_id, self.object_pk)
         )
+
+    def get_comment_souce(self):
+        ctype = ContentType.objects.get_for_model(self.content_object)
+        try:
+            object = ctype.model_class().objects.get(pk=self.object_pk)
+        except ObjectDoesNotExist:
+            return None
+        return object
+
 
 
     @property
