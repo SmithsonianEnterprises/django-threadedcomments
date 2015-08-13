@@ -59,6 +59,7 @@ class BaseThreadedCommentNode(BaseCommentNode):
 
     def get_queryset(self, context):
         qs = super(BaseThreadedCommentNode, self).get_queryset(context)
+        qs = qs.filter(Q(classroom__public_comments=True)).order_by('-submit_date')
         if self.flat:
             qs = qs.order_by('-submit_date')
         elif self.root_only:
