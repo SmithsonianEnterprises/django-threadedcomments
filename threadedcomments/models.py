@@ -37,16 +37,19 @@ class ThreadedComment(models.Model):
 
     classroom = models.ForeignKey('tweentribune.Classroom', null=True, blank=True, related_name="comments")
 
+
     # Metadata about the comment
     submit_date = models.DateTimeField(_('date/time submitted'), default=None)
     ip_address = models.GenericIPAddressField(_('IP address'), unpack_ipv4=True, blank=True, null=True)
-    is_public = models.BooleanField(_('is public'), default=False,
+    is_public = models.BooleanField(_('is public'), default=False, db_index=True,
                                     help_text=_('Uncheck this box to make the comment effectively '
                                                 'disappear from the site.'))
     is_removed = models.BooleanField(_('is removed'), default=False,
                                      help_text=_('Check this box if the comment is inappropriate. '
                                                  'A "This comment has been removed" message will '
                                                  'be displayed instead.'))
+
+    is_private_thread = models.BooleanField('is private thread', default=False, db_index=True)
 
     objects = CommentManager()
 
