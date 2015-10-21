@@ -4,7 +4,6 @@ from django.utils.translation import ugettext_lazy as _
 from .compat import BASE_APP
 from .models import ThreadedComment
 
-
 # This code is not in the .compat module to avoid admin imports in all other code.
 # The admin import usually starts a model registration too, hence keep these imports here.
 
@@ -52,7 +51,7 @@ class ThreadedCommentsAdmin(CommentsAdmin):
          {'fields': ('parent',)}
          ),
         (_('Metadata'),
-         {'fields': ('submit_date', 'ip_address', 'is_public', 'classroom_public', 'is_removed')}
+         {'fields': ('submit_date', 'ip_address', 'is_public', 'classroom_public', 'is_removed', 'tree_path', 'is_private_thread')}
          ),
     )
     list_filter = ('submit_date', 'site', IsPublicCommentFilter, 'is_removed')
@@ -61,7 +60,7 @@ class ThreadedCommentsAdmin(CommentsAdmin):
                     'ip_address', 'submit_date', 'classroom_public', 'is_public', 'is_removed')
     search_fields = ('comment', 'user__username', 'ip_address', 'object_pk')
     raw_id_fields = ("parent", 'user', 'classroom')
-    readonly_fields = ['classroom_public']
+    readonly_fields = ['classroom_public', 'tree_path']
 
     def classroom_public(self, obj):
         if obj.classroom:
